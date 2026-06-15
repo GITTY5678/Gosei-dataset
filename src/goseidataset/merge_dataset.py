@@ -212,29 +212,136 @@ class Supervised_learning:
         
     def vertical_stack(self,method="mean",n_neighbour=5):
         """
-    Vertically stack Dataset A and Dataset B
-    and perform imputation.
+Vertically stack Dataset A and Dataset B and perform
+missing value imputation using the user-selected method.
 
-    Parameters
-    ----------
-    method : str, default="mean"
+Parameters
+----------
+method : str, default="mean"
 
-        Supported methods:
-        - mean
-        - median
-        - mode
-        - knn
+    Imputation method to use.
 
-    n_neighbors : int, default=5
-        Used only for KNN imputation.
+    Supported methods:
+    - "mean"
+    - "median"
+    - "mode"
+    - "knn"
+    - "iterative"
+    - "random_forest"
+    - "xgboost"
 
-    Returns
-    -------
-    dict
-        Contains:
-        - imputed dataset
-        - imputation report
-    """
+n_neighbors : int, default=5
+
+    Number of neighbors used for KNN imputation.
+    Applicable only when method="knn".
+
+predictors : dict, optional
+
+    Required for:
+    - method="random_forest"
+    - method="xgboost"
+
+    Dictionary specifying which predictor columns
+    should be used to impute each target column.
+
+    Example:
+
+    {
+        "Sleep": ["Retention"],
+        "X": ["Retention", "Revision"]
+    }
+
+Returns
+-------
+dict
+
+    Returns a dictionary containing:
+
+    dataset : pandas.DataFrame
+
+        Vertically stacked dataset after
+        performing imputation.
+
+    report : dict
+
+        Detailed imputation report including:
+
+        - method used
+        - columns imputed
+        - rows imputed
+        - missing values before imputation
+        - missing values after imputation
+        - model performance metrics (where applicable)
+        - success/failure status for each column
+        - failure reasons (if any)
+
+Notes
+-----
+
+For "mean", "median", "mode", and "knn":
+
+    Missing values are filled directly using the
+    selected statistical or distance-based method.
+
+For "random_forest" and "xgboost":
+
+    A separate predictive model is trained for
+    each target column specified in the predictors
+    dictionary.
+
+    The model is trained using available rows and
+    then used to estimate missing values.
+
+    Performance metrics such as R² and MAE are
+    included in the report.
+
+For "iterative":
+
+    IterativeImputer is used to estimate missing
+    values by repeatedly modeling each column
+    using the remaining columns.
+
+Examples
+--------
+
+Mean Imputation
+
+>>> sl.vertical_stack(
+...     method="mean"
+... )
+
+KNN Imputation
+
+>>> sl.vertical_stack(
+...     method="knn",
+...     n_neighbors=3
+... )
+
+Random Forest Imputation
+
+>>> sl.vertical_stack(
+...     method="random_forest",
+...     predictors={
+...         "Sleep": ["Retention"],
+...         "Revision": ["Retention"]
+...     }
+... )
+
+XGBoost Imputation
+
+>>> sl.vertical_stack(
+...     method="xgboost",
+...     predictors={
+...         "Sleep": ["Retention", "Revision"]
+...     }
+... )
+
+Iterative Imputation
+
+>>> sl.vertical_stack(
+...     method="iterative"
+... )
+"""
         data=pd.concat([self.data_1,self.data_2],axis=0,ignore_index=False,sort=False)
         
         #mean imputation
@@ -379,8 +486,8 @@ class Supervised_learning:
                             ]
                         )
 
-                        stacked_df.loc[
-                            stacked_df[target_col].isna(),
+                        data.loc[
+                            data[target_col].isna(),
                             target_col
                         ] = pred_values
 
@@ -401,7 +508,46 @@ class Supervised_learning:
                     }
 
             return {
-                "dataset": stacked_df,
+                "dataset": data,
+                "report": report
+            }
+        elif method.lower() == "iterative":
+    
+            missing_before = (
+                data
+                .isnull()
+                .sum()
+                .sum()
+            )
+
+            imputer = IterativeImputer(
+                random_state=42
+            )
+
+            imputed_data = imputer.fit_transform(
+                data
+            )
+
+            data = pd.DataFrame(
+                imputed_data,
+                columns=data.columns
+            )
+
+            report = {
+                "method": "iterative",
+                "missing_before": int(
+                    missing_before
+                ),
+                "missing_after": int(
+                    data
+                    .isnull()
+                    .sum()
+                    .sum()
+                )
+            }
+
+            return {
+                "dataset": data,
                 "report": report
             }
             
@@ -414,8 +560,12 @@ class Supervised_learning:
                 median
                 mode
                 knn
+                iterative
+                random_forest
+                xgboost
                 """
             )
         
         return {"dataset":data}
+    
     
