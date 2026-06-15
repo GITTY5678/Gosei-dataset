@@ -1,7 +1,13 @@
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
-from xgboost import XGBRegressor
+try:
+    from xgboost import XGBRegressor
+except ImportError:
+    XGBRegressor = None
+
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     r2_score,
@@ -14,11 +20,143 @@ from sklearn.impute import KNNImputer
 class Supervised_learning:
 
     def __init__(self, dataset_a, dataset_b, target):
-        self.data_1 = dataset_a
-        self.data_2 = dataset_b
+        """
+    Initialize the Supervised_learning class.
+
+    Parameters
+    ----------
+    dataset_a : pandas.DataFrame, dict, or str
+        First dataset provided as:
+        - A Pandas DataFrame
+        - A Python dictionary
+        - A CSV file path
+
+    dataset_b : pandas.DataFrame, dict, or str
+        Second dataset provided as:
+        - A Pandas DataFrame
+        - A Python dictionary
+        - A CSV file path
+
+    target : str
+        Name of the target column present in both datasets.
+
+    Raises
+    ------
+    TypeError
+        If dataset_a or dataset_b is not a DataFrame,
+        dictionary, or CSV file path.
+    """
+
+        # Dataset A
+        if isinstance(dataset_a, pd.DataFrame):
+            self.data_1 = dataset_a.copy()
+
+        elif isinstance(dataset_a, str):
+            self.data_1 = pd.read_csv(dataset_a)
+
+        elif isinstance(dataset_a, dict):
+            self.data_1 = pd.DataFrame(dataset_a)
+
+        else:
+            raise TypeError(
+                "dataset_a must be a DataFrame, "
+                "dictionary, or CSV file path."
+            )
+
+        # Dataset B
+        if isinstance(dataset_b, pd.DataFrame):
+            self.data_2 = dataset_b.copy()
+
+        elif isinstance(dataset_b, str):
+            self.data_2 = pd.read_csv(dataset_b)
+
+        elif isinstance(dataset_b, dict):
+            self.data_2 = pd.DataFrame(dataset_b)
+
+        else:
+            raise TypeError(
+                "dataset_b must be a DataFrame, "
+                "dictionary, or CSV file path."
+            )
+
         self.tar = target
 
     def merge_same_target(self):
+        
+        """
+Merge two supervised learning datasets that share
+the same target variable and identical target values.
+
+The target column from Dataset B is removed before
+merging to avoid duplication.
+
+Parameters
+----------
+None
+
+Returns
+-------
+pandas.DataFrame
+
+    A horizontally merged DataFrame containing:
+
+    - All columns from Dataset A
+    - Non-target columns from Dataset B
+
+Raises
+------
+ValueError
+
+    If the datasets do not have the same number
+    of rows.
+
+ValueError
+
+    If the target column is missing from either
+    dataset.
+
+ValueError
+
+    If the target values in the two datasets
+    are not identical.
+
+Examples
+--------
+>>> sl.merge_same_target()
+
+Dataset A
+
++-------+----------+-----------+
+| Sleep | Revision | Retention |
++-------+----------+-----------+
+|   8   |    1     |    80     |
++-------+----------+-----------+
+
+Dataset B
+
++----+----+-----------+
+| X  | Y  | Retention |
++----+----+-----------+
+| 10 | 20 |    80     |
++----+----+-----------+
+
+Output
+
++-------+----------+-----------+----+----+
+| Sleep | Revision | Retention | X  | Y  |
++-------+----------+-----------+----+----+
+|   8   |    1     |    80     | 10 | 20 |
++-------+----------+-----------+----+----+
+
+Notes
+-----
+This method assumes that both datasets represent
+the same observations in the same order and that
+their target values are identical row-by-row.
+
+The target column from Dataset B is automatically
+dropped before merging.
+"""
 
         if len(self.data_1) != len(self.data_2):
             raise ValueError(
@@ -172,25 +310,33 @@ class Supervised_learning:
         model_a.fit(x_train_a,y_train_a)
         model_b.fit(x_train_b,y_train_b)
         
-        pred_a=model_a.predict(x_test_a)
-        pred_b=model_b.predict(x_test_b)
+        test_pred_a = model_a.predict(x_test_a)
+        test_pred_b = model_b.predict(x_test_b)
+
+        full_pred_a = model_a.predict(x_a)
+        full_pred_b = model_b.predict(x_b)
         
-        r2_a = r2_score(y_test_a, pred_a)
-        r2_b = r2_score(y_test_b, pred_b)
+        r2_a = r2_score(y_test_a, test_pred_a)
+        r2_b = r2_score(y_test_b, test_pred_b)
         
-        total_r2=r2_a+r2_b
+        total_r2 = abs(r2_a) + abs(r2_b)
         
         #weights
         if total_r2==0:
-            weight_a,weight_b=0,0
+            weight_a = 0.5
+            weight_b = 0.5
         else:
             weight_a=abs(r2_a)/total_r2
             weight_b=abs(r2_b)/total_r2
             
+        if len(full_pred_a) != len(full_pred_b):
+            raise ValueError(
+            "Dataset A and Dataset B must have the same number of rows."
+    )
         ensemble_pred = (
-    weight_a * pred_a
+    weight_a * full_pred_a
     +
-    weight_b * pred_b
+    weight_b * full_pred_b
 )
         final_table = pd.concat(
     [
@@ -210,7 +356,7 @@ class Supervised_learning:
     "dataset_b_r2": round(r2_b, 4)
 }
         
-    def vertical_stack(self,method="mean",n_neighbour=5):
+    def vertical_stack(self,method="mean",n_neighbour=5,predictors=None):
         """
 Vertically stack Dataset A and Dataset B and perform
 missing value imputation using the user-selected method.
@@ -342,8 +488,12 @@ Iterative Imputation
 ...     method="iterative"
 ... )
 """
-        data=pd.concat([self.data_1,self.data_2],axis=0,ignore_index=False,sort=False)
-        
+        data = pd.concat(
+    [self.data_1, self.data_2],
+    axis=0,
+    ignore_index=True,
+    sort=False
+)
         #mean imputation
         if method.lower()=="mean":
             for col in data.columns:
@@ -358,18 +508,33 @@ Iterative Imputation
         elif method.lower()=="mode":
             for col in data.columns:
                 if data[col].isnull().sum()>0:
-                    data[col]=data[col].fillna(data[col].mode())
+                    data[col]=data[col].fillna(data[col].mode()[0])
         #knn
         elif method.lower()=="knn":
-            imputer=KNNImputer(n_neighbors=n_neighbour)
-            data[:]=imputer.fit_transform(data)
+            numeric_cols = data.select_dtypes(
+            include=np.number
+        ).columns
+
+            imputer = KNNImputer(
+                n_neighbors=n_neighbour
+            )
+
+            data[numeric_cols] = (
+                imputer.fit_transform(
+                    data[numeric_cols]
+                )
+            )
         elif method.lower() in [
     "random_forest",
     "xgboost"
 ]:
 
             report = {}
-
+            if predictors is None:
+                raise ValueError(
+                "predictors must be provided for "
+                "random_forest and xgboost methods."
+            )
             for target_col, predictor_cols in predictors.items():
 
                 try:
@@ -524,12 +689,16 @@ Iterative Imputation
                 random_state=42
             )
 
-            imputed_data = imputer.fit_transform(
-                data
+            numeric_cols = data.select_dtypes(
+    include=np.number
+).columns
+
+            data[numeric_cols] = imputer.fit_transform(
+                data[numeric_cols]
             )
 
             data = pd.DataFrame(
-                imputed_data,
+                numeric_cols,
                 columns=data.columns
             )
 
