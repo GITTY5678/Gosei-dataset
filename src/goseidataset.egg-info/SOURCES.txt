@@ -1,0 +1,8 @@
+pyproject.toml
+src/goseidataset/__init__.py
+src/goseidataset/timeseries.py
+src/goseidataset.egg-info/PKG-INFO
+src/goseidataset.egg-info/SOURCES.txt
+src/goseidataset.egg-info/dependency_links.txt
+src/goseidataset.egg-info/top_level.txt
+tests/test_timeseries.py

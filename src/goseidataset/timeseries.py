@@ -2,7 +2,7 @@ import pandas as pd
 from datetime import datetime
 
 class   TimeSeriesGenerator:
-    def ___init__(self,dataset):
+    def __init__(self,dataset):
         
         if isinstance(dataset,pd.DataFrame):
             self.df=dataset.copy()
