@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-
+from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     r2_score,
@@ -9,7 +10,7 @@ from sklearn.metrics import (
 )
 from sklearn.base import clone
 
-
+from sklearn.impute import KNNImputer
 class Supervised_learning:
 
     def __init__(self, dataset_a, dataset_b, target):
@@ -209,6 +210,212 @@ class Supervised_learning:
     "dataset_b_r2": round(r2_b, 4)
 }
         
+    def vertical_stack(self,method="mean",n_neighbour=5):
+        """
+    Vertically stack Dataset A and Dataset B
+    and perform imputation.
+
+    Parameters
+    ----------
+    method : str, default="mean"
+
+        Supported methods:
+        - mean
+        - median
+        - mode
+        - knn
+
+    n_neighbors : int, default=5
+        Used only for KNN imputation.
+
+    Returns
+    -------
+    dict
+        Contains:
+        - imputed dataset
+        - imputation report
+    """
+        data=pd.concat([self.data_1,self.data_2],axis=0,ignore_index=False,sort=False)
         
+        #mean imputation
+        if method.lower()=="mean":
+            for col in data.columns:
+                if data[col].isnull().sum()>0:
+                    data[col]=data[col].fillna(data[col].mean())
+        #median
+        elif method.lower()=="median":
+            for col in data.columns:
+                if data[col].isnull().sum()>0:
+                    data[col]=data[col].fillna(data[col].median())
+        #mode
+        elif method.lower()=="mode":
+            for col in data.columns:
+                if data[col].isnull().sum()>0:
+                    data[col]=data[col].fillna(data[col].mode())
+        #knn
+        elif method.lower()=="knn":
+            imputer=KNNImputer(n_neighbors=n_neighbour)
+            data[:]=imputer.fit_transform(data)
+        elif method.lower() in [
+    "random_forest",
+    "xgboost"
+]:
+
+            report = {}
+
+            for target_col, predictor_cols in predictors.items():
+
+                try:
+
+                    if target_col not in data.columns:
+
+                        report[target_col] = {
+                            "status": "failed",
+                            "reason": "Column not found"
+                        }
+
+                        continue
+
+                    train_df = data[
+                        data[target_col].notna()
+                    ]
+
+                    predict_df = data[
+                        data[target_col].isna()
+                    ]
+
+                    if len(train_df) == 0:
+
+                        report[target_col] = {
+                            "status": "failed",
+                            "reason": "No training rows available"
+                        }
+
+                        continue
+
+                    if train_df[predictor_cols].isnull().sum().sum() > 0:
+
+                        report[target_col] = {
+                            "status": "failed",
+                            "reason": "Predictor columns contain missing values"
+                        }
+
+                        continue
+
+                    X = train_df[predictor_cols]
+                    y = train_df[target_col]
+
+                    X_train, X_test, y_train, y_test = (
+                        train_test_split(
+                            X,
+                            y,
+                            test_size=0.2,
+                            random_state=42
+                        )
+                    )
+
+                    if method.lower() == "random_forest":
+
+                        model = RandomForestRegressor(
+                            random_state=42
+                        )
+
+                    else:
+
+                        if XGBRegressor is None:
+
+                            raise ImportError(
+                                "xgboost is required. "
+                                "Install using "
+                                "'pip install xgboost'"
+                            )
+
+                        model = XGBRegressor(
+                            random_state=42
+                        )
+
+                    model.fit(
+                        X_train,
+                        y_train
+                    )
+
+                    y_pred = model.predict(
+                        X_test
+                    )
+
+                    r2 = r2_score(
+                        y_test,
+                        y_pred
+                    )
+
+                    mae = mean_absolute_error(
+                        y_test,
+                        y_pred
+                    )
+
+                    if len(predict_df) > 0:
+
+                        if (
+                            predict_df[
+                                predictor_cols
+                            ]
+                            .isnull()
+                            .sum()
+                            .sum()
+                            > 0
+                        ):
+
+                            report[target_col] = {
+                                "status": "failed",
+                                "reason":
+                                "Rows to predict contain missing predictors"
+                            }
+
+                            continue
+
+                        pred_values = model.predict(
+                            predict_df[
+                                predictor_cols
+                            ]
+                        )
+
+                        stacked_df.loc[
+                            stacked_df[target_col].isna(),
+                            target_col
+                        ] = pred_values
+
+                    report[target_col] = {
+                        "status": "success",
+                        "method": method,
+                        "predictors": predictor_cols,
+                        "r2": round(r2, 4),
+                        "mae": round(mae, 4),
+                        "rows_imputed": len(predict_df)
+                    }
+
+                except Exception as e:
+
+                    report[target_col] = {
+                        "status": "failed",
+                        "reason": str(e)
+                    }
+
+            return {
+                "dataset": stacked_df,
+                "report": report
+            }
+            
+        else:
+    
+            raise ValueError(
+                """
+                Supported methods:
+                mean
+                median
+                mode
+                knn
+                """
+            )
         
-        
+        return {"dataset":data}
+    
