@@ -349,94 +349,121 @@ class DatasetGenerator:
     target,
     correlations,
     constraints,
-    return_report=False
+    return_report=False,
+    dtypes=None
 ):
         """
-    Generate a synthetic dataset with user-defined
-    correlations against a target variable.
+        Generate a synthetic dataset with user-defined
+        correlations against a target variable.
 
-    Parameters
-    ----------
-    n_rows : int
-        Number of rows to generate.
+        Parameters
+        ----------
+        n_rows : int
+            Number of rows to generate.
 
-    target : str
-        Name of the target column.
+        target : str
+            Name of the target column.
 
-    correlations : dict
-        Desired correlations with target.
+        correlations : dict
+            Desired correlations with target.
 
-        Example:
+            Example:
 
-        {
-            "sleep": 0.3,
-            "revision": 0.8,
-            "stress": -0.4
-        }
+            {
+                "sleep": 0.3,
+                "revision": 0.8,
+                "stress": -0.4
+            }
 
-    constraints : dict
-        Numerical ranges for columns.
+        constraints : dict
+            Numerical ranges for columns.
 
-        Example:
+            Example:
 
-        {
-            "sleep": [4, 10],
-            "revision": [0, 8],
-            "stress": [1, 100],
-            "retention": [0, 100]
-        }
+            {
+                "sleep": [4, 10],
+                "revision": [0, 8],
+                "stress": [1, 100],
+                "retention": [0, 100]
+            }
 
-    return_report : bool, optional
+        return_report : bool, optional
 
-        If True, returns both
-        dataset and correlation report.
+            If True, returns both
+            dataset and correlation report.
 
-        Default is False.
+            Default is False.
 
-    Returns
-    -------
-    pandas.DataFrame
+        dtypes : dict, optional
 
-        Generated dataset.
+            Specifies the data type
+            for numerical columns.
 
-    or
+            Supported values:
 
-    dict
+            - "int"
+            - "float"
 
-        Returned when
-        return_report=True
+            Example:
 
-        {
-            "dataset": DataFrame,
-            "correlation_report": DataFrame
-        }
+            {
+                "marks": "int",
+                "hours": "int",
+                "stress": "float"
+            }
 
-    Raises
-    ------
-    ValueError
+            Columns not specified are
+            generated as float by default.
 
-        If n_rows < 1.
+        Returns
+        -------
+        pandas.DataFrame
 
-    ValueError
+            Generated dataset.
 
-        If target is not present
-        inside constraints.
+        or
 
-    ValueError
+        dict
 
-        If correlation values
-        are outside [-1, 1].
+            Returned when
+            return_report=True
 
-    Notes
-    -----
-    This method is intended for
-    educational purposes and
-    synthetic dataset generation.
+            {
+                "dataset": DataFrame,
+                "correlation_report": DataFrame
+            }
 
-    Actual correlations may differ
-    slightly from requested values
-    because of random sampling.
-    """
+        Raises
+        ------
+        ValueError
+
+            If n_rows < 1.
+
+        ValueError
+
+            If target is not present
+            inside constraints.
+
+        ValueError
+
+            If correlation values
+            are outside [-1, 1].
+
+        ValueError
+
+            If an invalid dtype
+            is provided.
+
+        Notes
+        -----
+        This method is intended for
+        educational purposes and
+        synthetic dataset generation.
+
+        Actual correlations may differ
+        slightly from requested values
+        because of random sampling.
+        """
 
         if n_rows < 1:
             raise ValueError(
@@ -448,6 +475,9 @@ class DatasetGenerator:
                 f"{target} must be present "
                 "inside constraints."
             )
+
+        if dtypes is None:
+            dtypes = {}
 
         for feature, corr in correlations.items():
 
@@ -484,14 +514,12 @@ class DatasetGenerator:
         target_scaled = (
             (
                 target_signal
-                -
-                target_signal.min()
+                - target_signal.min()
             )
             /
             (
                 target_signal.max()
-                -
-                target_signal.min()
+                - target_signal.min()
             )
         )
 
@@ -500,12 +528,38 @@ class DatasetGenerator:
             *
             (
                 target_max
-                -
-                target_min
+                - target_min
             )
             +
             target_min
         )
+
+        target_dtype = dtypes.get(
+            target,
+            "float"
+        )
+
+        if target_dtype == "int":
+
+            target_scaled = np.round(
+                target_scaled
+            ).astype(int)
+
+        elif target_dtype == "float":
+
+            target_scaled = target_scaled.astype(
+                float
+            )
+
+        else:
+
+            raise ValueError(
+                f"Invalid dtype "
+                f"'{target_dtype}' "
+                f"for column "
+                f"'{target}'. "
+                "Use 'int' or 'float'."
+            )
 
         data[target] = target_scaled
 
@@ -541,14 +595,12 @@ class DatasetGenerator:
             feature_scaled = (
                 (
                     feature_signal
-                    -
-                    feature_signal.min()
+                    - feature_signal.min()
                 )
                 /
                 (
                     feature_signal.max()
-                    -
-                    feature_signal.min()
+                    - feature_signal.min()
                 )
             )
 
@@ -557,12 +609,38 @@ class DatasetGenerator:
                 *
                 (
                     feature_max
-                    -
-                    feature_min
+                    - feature_min
                 )
                 +
                 feature_min
             )
+
+            feature_dtype = dtypes.get(
+                feature,
+                "float"
+            )
+
+            if feature_dtype == "int":
+
+                feature_scaled = np.round(
+                    feature_scaled
+                ).astype(int)
+
+            elif feature_dtype == "float":
+
+                feature_scaled = feature_scaled.astype(
+                    float
+                )
+
+            else:
+
+                raise ValueError(
+                    f"Invalid dtype "
+                    f"'{feature_dtype}' "
+                    f"for column "
+                    f"'{feature}'. "
+                    "Use 'int' or 'float'."
+                )
 
             data[feature] = feature_scaled
 
@@ -606,71 +684,110 @@ class DatasetGenerator:
             }
 
         return dataset
-    def generate_formula(self,n_rows,formula,constraints,target,noise=0.1):
+    def generate_formula(
+    self,
+    n_rows,
+    formula,
+    constraints,
+    target,
+    noise=0.1,
+    dtypes=None
+):
         """
-    Generate a synthetic dataset using
-    a mathematical formula.
+        Generate a synthetic dataset using
+        a mathematical formula.
 
-    Parameters
-    ----------
-    n_rows : int
-        Number of rows to generate.
+        Parameters
+        ----------
+        n_rows : int
+            Number of rows to generate.
 
-    formula : str
-        Formula used to create target.
+        formula : str
+            Formula used to create target.
 
-        Example:
+            Example:
 
-        "0.4*sleep + 0.8*revision - 0.2*stress"
+            "0.4*sleep + 0.8*revision - 0.2*stress"
 
-    constraints : dict
-        Numerical constraints.
+        constraints : dict
+            Numerical constraints.
 
-        Example:
+            Example:
 
-        {
-            "sleep":[4,10],
-            "revision":[0,8],
-            "stress":[1,100],
-            "retention":[0,100]
-        }
+            {
+                "sleep":[4,10],
+                "revision":[0,8],
+                "stress":[1,100],
+                "retention":[0,100]
+            }
 
-    target : str
-        Target column name.
+        target : str
+            Target column name.
 
-    noise : float, default=0.1
-        Amount of random noise added.
+        noise : float, default=0.1
+            Amount of random noise added.
 
-    Returns
-    -------
-    pandas.DataFrame
-        Generated dataset.
+        dtypes : dict, optional
 
-    Raises
-    ------
-    ValueError
-        If target is missing
-        from constraints.
+            Specifies the data type
+            for numerical columns.
 
-    Notes
-    -----
-    Intended for educational
-    purposes and synthetic
-    dataset generation.
-    """
+            Supported values:
+
+            - "int"
+            - "float"
+
+            Example:
+
+            {
+                "sleep":"int",
+                "revision":"int",
+                "retention":"float"
+            }
+
+            Columns not specified are
+            generated as float by default.
+
+        Returns
+        -------
+        pandas.DataFrame
+            Generated dataset.
+
+        Raises
+        ------
+        ValueError
+            If target is missing
+            from constraints.
+
+        ValueError
+            If an invalid dtype
+            is provided.
+
+        Notes
+        -----
+        Intended for educational
+        purposes and synthetic
+        dataset generation.
+        """
+
         if n_rows < 1:
             raise ValueError(
-            "n_rows must be greater than 0."
-        )
+                "n_rows must be greater than 0."
+            )
 
         if target not in constraints:
             raise ValueError(
                 f"{target} not found "
                 "in constraints."
             )
-        data={}
+
+        if dtypes is None:
+            dtypes = {}
+
+        data = {}
+
         for column, values in constraints.items():
-    
+
             if column == target:
                 continue
 
@@ -680,12 +797,43 @@ class DatasetGenerator:
                     "[min,max]."
                 )
 
-            data[column] = np.random.uniform(
+            generated = np.random.uniform(
                 values[0],
                 values[1],
                 n_rows
             )
-        df=pd.DataFrame(data)
+
+            column_dtype = dtypes.get(
+                column,
+                "float"
+            )
+
+            if column_dtype == "int":
+
+                generated = np.round(
+                    generated
+                ).astype(int)
+
+            elif column_dtype == "float":
+
+                generated = generated.astype(
+                    float
+                )
+
+            else:
+
+                raise ValueError(
+                    f"Invalid dtype "
+                    f"'{column_dtype}' "
+                    f"for column "
+                    f"'{column}'. "
+                    "Use 'int' or 'float'."
+                )
+
+            data[column] = generated
+
+        df = pd.DataFrame(data)
+
         try:
 
             target_values = eval(
@@ -744,5 +892,36 @@ class DatasetGenerator:
         )
 
         df[target] = target_values
+
+        # ---------------------------
+        # Apply Target Dtype
+        # ---------------------------
+
+        target_dtype = dtypes.get(
+            target,
+            "float"
+        )
+
+        if target_dtype == "int":
+
+            df[target] = np.round(
+                df[target]
+            ).astype(int)
+
+        elif target_dtype == "float":
+
+            df[target] = df[target].astype(
+                float
+            )
+
+        else:
+
+            raise ValueError(
+                f"Invalid dtype "
+                f"'{target_dtype}' "
+                f"for column "
+                f"'{target}'. "
+                "Use 'int' or 'float'."
+            )
 
         return df
