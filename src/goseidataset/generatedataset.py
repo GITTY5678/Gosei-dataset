@@ -8,7 +8,8 @@ class DatasetGenerator:
     self,
     n_rows,
     constraints,
-    bias=None
+    bias=None,
+    dtypes=None
 ):
         """
     Generate a random dataset using
@@ -63,6 +64,27 @@ class DatasetGenerator:
 
         Default is None.
 
+    dtypes : dict, optional
+
+        Specifies the data type for
+        numerical columns.
+
+        Supported values:
+
+        - "int"
+        - "float"
+
+        Example:
+
+        {
+            "age": "int",
+            "salary": "int",
+            "cgpa": "float"
+        }
+
+        Columns not specified are
+        generated as float by default.
+
     Returns
     -------
     pandas.DataFrame
@@ -83,6 +105,9 @@ class DatasetGenerator:
     ValueError
         If a column contains mixed
         data types.
+
+    ValueError
+        If an invalid dtype is provided.
 
     Notes
     -----
@@ -105,6 +130,9 @@ class DatasetGenerator:
 
         if bias is None:
             bias = {}
+
+        if dtypes is None:
+            dtypes = {}
 
         data = {}
 
@@ -255,6 +283,34 @@ class DatasetGenerator:
                         f"Invalid bias "
                         f"for column "
                         f"'{column}'."
+                    )
+
+                # Apply dtype
+                column_dtype = dtypes.get(
+                    column,
+                    "float"
+                )
+
+                if column_dtype == "int":
+
+                    generated = np.round(
+                        generated
+                    ).astype(int)
+
+                elif column_dtype == "float":
+
+                    generated = generated.astype(
+                        float
+                    )
+
+                else:
+
+                    raise ValueError(
+                        f"Invalid dtype "
+                        f"'{column_dtype}' "
+                        f"for column "
+                        f"'{column}'. "
+                        "Use 'int' or 'float'."
                     )
 
                 data[column] = generated
