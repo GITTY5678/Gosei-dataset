@@ -4,89 +4,95 @@ import numpy as np
 class DatasetGenerator:
     def __init__(self):
         pass
-    def generate_random(self,n_rows,constraints,bias=None):
+    def generate_random(
+    self,
+    n_rows,
+    constraints,
+    bias=None
+):
         """
-        Generate a random dataset using
-        user-defined constraints.
+    Generate a random dataset using
+    user-defined constraints.
 
-        Parameters
-        ----------
-        n_rows : int
-            Number of rows to generate.
+    Parameters
+    ----------
+    n_rows : int
+        Number of rows to generate.
 
-        constraints : dict
-            Dictionary defining the values
-            to generate for each column.
+    constraints : dict
+        Dictionary defining the values
+        to generate for each column.
 
-            Numerical columns:
+        Numerical columns:
 
-            {
-                "sleep": [4, 10],
-                "revision": [0, 8]
-            }
+        {
+            "sleep": [4, 10],
+            "revision": [0, 8]
+        }
 
-            Categorical columns:
+        Categorical columns:
 
-            {
-                "session": ["M", "J"],
-                "subject": [
-                    "Math",
-                    "Physics",
-                    "Chemistry"
-                ]
-            }
+        {
+            "session": ["M", "J"],
+            "subject": [
+                "Math",
+                "Physics",
+                "Chemistry"
+            ]
+        }
 
-        bias : dict, optional
+    bias : dict, optional
 
-            Controls the distribution of
-            numerical columns.
+        Controls the distribution of
+        numerical columns.
 
-            Supported values:
+        Supported values:
 
-            - "high"
-            - "low"
-            - "center"
-            - numeric value
+        - "high"
+        - "low"
+        - "center"
+        - numeric value
 
-            Example:
+        Example:
 
-            {
-                "sleep": "high",
-                "revision": "center",
-                "stress": 20
-            }
+        {
+            "sleep": "high",
+            "revision": "center",
+            "stress": 20
+        }
 
-            Default is None.
+        Default is None.
 
-        Returns
-        -------
-        pandas.DataFrame
-            Randomly generated dataset.
+    Returns
+    -------
+    pandas.DataFrame
+        Randomly generated dataset.
 
-        Raises
-        ------
-        ValueError
-            If n_rows is less than 1.
+    Raises
+    ------
+    ValueError
+        If n_rows is less than 1.
 
-        ValueError
-            If constraints is empty.
+    ValueError
+        If constraints is empty.
 
-        ValueError
-            If numerical constraints do not
-            contain exactly [min, max].
+    ValueError
+        If numerical constraints do not
+        contain exactly [min, max].
 
-        ValueError
-            If a column contains mixed
-            data types.
+    ValueError
+        If a column contains mixed
+        data types.
 
-        Notes
-        -----
-        This method is intended for
-        educational purposes,
-        synthetic dataset generation,
-        testing machine learning pipelines,
-        and benchmarking algorithms.
-        """
+    Notes
+    -----
+    This method is intended for
+    educational purposes,
+    synthetic dataset generation,
+    testing machine learning pipelines,
+    and benchmarking algorithms.
+    """
+
         if n_rows < 1:
             raise ValueError(
                 "n_rows must be greater than 0."
@@ -99,9 +105,17 @@ class DatasetGenerator:
 
         if bias is None:
             bias = {}
-        data={}
-        for column,values in constraints.items():
-            if (isinstance(v,(int,float)) for v in values):
+
+        data = {}
+
+        for column, values in constraints.items():
+
+            # Numerical column
+            if all(
+                isinstance(v, (int, float))
+                for v in values
+            ):
+
                 if len(values) != 2:
                     raise ValueError(
                         f"{column} must contain "
@@ -110,47 +124,147 @@ class DatasetGenerator:
 
                 min_value = values[0]
                 max_value = values[1]
-                if isinstance
+
                 if min_value > max_value:
                     raise ValueError(
                         f"{column}: minimum value "
                         "cannot be greater than "
                         "maximum value."
                     )
-                column_bias=bias.get(column,0)
-                #no bias
+
+                column_bias = bias.get(
+                    column,
+                    None
+                )
+
+                # No bias
                 if column_bias is None:
-                    generated=np.random.uniform(min_value,max_value,n_rows)
-                if isinstance(column_bias,str):
-                    #high bias
-                    if column_bias.lower()=="high":
-                        generated=np.random.beta(5,2,n_rows)
-                        generated=(min_value+generated*(max_value-min_value))
-                    #low bias
-                    if column_bias.lower()=="low":
-                        generated=np.random.beta(2,5,n_rows)
-                        generated=(min_value+generated*(max_value-min_value))
-                    #center bias
-                    if column_bias.lower()=="center":
-                        generated=np.random.beta(5,5,n_rows)
-                        generated=(min_value+generated*(max_value-min_value))
-                #mean bias
-                elif isinstance(column_bias,(int,float)):
-                    mean=column_bias
-                    
-                    std=(max_value-min_value)/6
-                    generated=np.random.normal(loc=mean,scale=std,size=n_rows)
-                    generated=np.clip(generated,min_value,max_value)
-                    
+
+                    generated = np.random.uniform(
+                        min_value,
+                        max_value,
+                        n_rows
+                    )
+
+                # String bias
+                elif isinstance(
+                    column_bias,
+                    str
+                ):
+
+                    if (
+                        column_bias.lower()
+                        == "high"
+                    ):
+
+                        generated = np.random.beta(
+                            5,
+                            2,
+                            n_rows
+                        )
+
+                        generated = (
+                            min_value
+                            +
+                            generated
+                            * (
+                                max_value
+                                - min_value
+                            )
+                        )
+
+                    elif (
+                        column_bias.lower()
+                        == "low"
+                    ):
+
+                        generated = np.random.beta(
+                            2,
+                            5,
+                            n_rows
+                        )
+
+                        generated = (
+                            min_value
+                            +
+                            generated
+                            * (
+                                max_value
+                                - min_value
+                            )
+                        )
+
+                    elif (
+                        column_bias.lower()
+                        == "center"
+                    ):
+
+                        generated = np.random.beta(
+                            5,
+                            5,
+                            n_rows
+                        )
+
+                        generated = (
+                            min_value
+                            +
+                            generated
+                            * (
+                                max_value
+                                - min_value
+                            )
+                        )
+
+                    else:
+
+                        raise ValueError(
+                            f"Invalid bias "
+                            f"'{column_bias}' "
+                            f"for column "
+                            f"'{column}'."
+                        )
+
+                # Mean bias
+                elif isinstance(
+                    column_bias,
+                    (int, float)
+                ):
+
+                    mean = column_bias
+
+                    std = (
+                        max_value
+                        - min_value
+                    ) / 6
+
+                    generated = np.random.normal(
+                        loc=mean,
+                        scale=std,
+                        size=n_rows
+                    )
+
+                    generated = np.clip(
+                        generated,
+                        min_value,
+                        max_value
+                    )
+
                 else:
-    
+
                     raise ValueError(
                         f"Invalid bias "
-                        f"for column '{column}'."
+                        f"for column "
+                        f"'{column}'."
                     )
-                data[column]=generated
-                
-            elif all(isinstance(v,str) for v in values):
+
+                data[column] = generated
+
+            # Categorical column
+            elif all(
+                isinstance(v, str)
+                for v in values
+            ):
+
                 if len(values) == 0:
                     raise ValueError(
                         f"{column} must contain "
@@ -161,14 +275,17 @@ class DatasetGenerator:
                     values,
                     size=n_rows
                 )
+
+            # Mixed types
             else:
-    
+
                 raise ValueError(
                     f"{column} contains mixed "
                     "data types. Use either "
                     "all numeric values or "
                     "all string values."
                 )
+
         return pd.DataFrame(data)
     def generate_correlated(self,n_rows,target,correlations,constraints):
         """
