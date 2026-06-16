@@ -162,9 +162,9 @@ pandas.DataFrame
     Dataset with a HOUR column inserted as the first column.
 """
         if start is None:
-            start=datetime.now().strftime("%Y-%m-%d %H-00-00")
+            start=datetime.now().strftime("%Y-%m-%d %H:00:00")
         dates=pd.date_range(start=start,periods=len(self.df),freq=f"{step}h")
-        return self.manual_insertion("HOUR",dates.strftime("%Y-%m-%d %H-00-00"))
+        return self.manual_insertion("HOUR",dates.strftime("%Y-%m-%d %H:00:00"))
     def minute_series(self,start=None,step=1):
         """
 Generate a minute-level time series column.
@@ -184,9 +184,9 @@ pandas.DataFrame
     Dataset with a MINUTE column inserted as the first column.
 """
         if start is None:
-            start=datetime.now().strftime("%Y-%m-%d %H-%M-00")
+            start=datetime.now().strftime("%Y-%m-%d %H:%M:00")
         dates=pd.date_range(start=start,periods=len(self.df),freq=f"{step}min")
-        return self.manual_insertion("MINUTE",dates.strftime("%Y-%m-%d %H-%M-00"))
+        return self.manual_insertion("MINUTE",dates.strftime("%Y-%m-%d %H:%M:00"))
     def second_series(self,start=None,step=1):
         """
 Generate a second-level time series column.
@@ -206,9 +206,9 @@ pandas.DataFrame
     Dataset with a SECOND column inserted as the first column.
 """
         if start is None:
-            start=datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+            start=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dates=pd.date_range(start=start,periods=len(self.df),freq=f"{step}s")
-        return self.manual_insertion("SECOND",dates.strftime("%Y-%m-%d %H-%M-%S"))
+        return self.manual_insertion("SECOND",dates.strftime("%Y-%m-%d %H:%M:%S"))
     def timestamp_series(self,start=None,step=1):
         """
 Generate a timestamp column.
@@ -228,6 +228,6 @@ pandas.DataFrame
     Dataset with a TIMESTAMP column inserted as the first column.
 """
         if start is None:
-            start=datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+            start=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dates=pd.date_range(start=start,periods=len(self.df),freq=f"{step}s")
         return self.manual_insertion("TIMESTAMP",dates)
