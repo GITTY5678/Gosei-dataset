@@ -343,7 +343,14 @@ class DatasetGenerator:
                 )
 
         return pd.DataFrame(data)
-    def generate_correlated(self,n_rows,target,correlations,constraints):
+    def generate_correlated(
+    self,
+    n_rows,
+    target,
+    correlations,
+    constraints,
+    return_report=False
+):
         """
     Generate a synthetic dataset with user-defined
     correlations against a target variable.
@@ -379,9 +386,25 @@ class DatasetGenerator:
             "retention": [0, 100]
         }
 
+    return_report : bool, optional
+
+        If True, returns both
+        dataset and correlation report.
+
+        Default is False.
+
     Returns
     -------
+    pandas.DataFrame
+
+        Generated dataset.
+
+    or
+
     dict
+
+        Returned when
+        return_report=True
 
         {
             "dataset": DataFrame,
@@ -397,7 +420,7 @@ class DatasetGenerator:
     ValueError
 
         If target is not present
-        in constraints.
+        inside constraints.
 
     ValueError
 
@@ -475,7 +498,11 @@ class DatasetGenerator:
         target_scaled = (
             target_scaled
             *
-            (target_max - target_min)
+            (
+                target_max
+                -
+                target_min
+            )
             +
             target_min
         )
@@ -483,7 +510,7 @@ class DatasetGenerator:
         data[target] = target_scaled
 
         # ----------------------------------
-        # Generate Features
+        # Generate Correlated Features
         # ----------------------------------
 
         report = []
@@ -571,10 +598,14 @@ class DatasetGenerator:
 
         report = pd.DataFrame(report)
 
-        return {
-            "dataset": dataset,
-            "correlation_report": report
-        }
+        if return_report:
+
+            return {
+                "dataset": dataset,
+                "correlation_report": report
+            }
+
+        return dataset
     def generate_formula(self,n_rows,formula,constraints,target,noise=0.1):
         """
     Generate a synthetic dataset using
