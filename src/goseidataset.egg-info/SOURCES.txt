@@ -9,6 +9,7 @@ src/goseidataset/timeseries.py
 src/goseidataset.egg-info/PKG-INFO
 src/goseidataset.egg-info/SOURCES.txt
 src/goseidataset.egg-info/dependency_links.txt
+src/goseidataset.egg-info/requires.txt
 src/goseidataset.egg-info/top_level.txt
 tests/test_generatedataset.py
 tests/test_merge_dataset.py

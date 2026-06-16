@@ -110,7 +110,7 @@ class DatasetGenerator:
 
                 min_value = values[0]
                 max_value = values[1]
-
+                if isinstance
                 if min_value > max_value:
                     raise ValueError(
                         f"{column}: minimum value "
@@ -121,18 +121,19 @@ class DatasetGenerator:
                 #no bias
                 if column_bias is None:
                     generated=np.random.uniform(min_value,max_value,n_rows)
-                #high bias
-                if column_bias.lower()=="high":
-                    generated=np.random.beta(5,2,n_rows)
-                    generated=(min_value+generated*(max_value-min_value))
-                #low bias
-                if column_bias.lower()=="low":
-                    generated=np.random.beta(2,5,n_rows)
-                    generated=(min_value+generated*(max_value-min_value))
-                #center bias
-                if column_bias.lower()=="center":
-                    generated=np.random.beta(5,5,n_rows)
-                    generated=(min_value+generated*(max_value-min_value))
+                if isinstance(column_bias,str):
+                    #high bias
+                    if column_bias.lower()=="high":
+                        generated=np.random.beta(5,2,n_rows)
+                        generated=(min_value+generated*(max_value-min_value))
+                    #low bias
+                    if column_bias.lower()=="low":
+                        generated=np.random.beta(2,5,n_rows)
+                        generated=(min_value+generated*(max_value-min_value))
+                    #center bias
+                    if column_bias.lower()=="center":
+                        generated=np.random.beta(5,5,n_rows)
+                        generated=(min_value+generated*(max_value-min_value))
                 #mean bias
                 elif isinstance(column_bias,(int,float)):
                     mean=column_bias
