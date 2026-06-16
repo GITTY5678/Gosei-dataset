@@ -128,7 +128,7 @@ class MissingValueGenerator:
         for _ in range(missing_cells):
             row=random.randint(0,data.shape[0]-1)
             col=random.randint(0,data.shape[1]-1)
-            data.iat(row,col)=np.nan
+            data.iat[row,col]=np.nan
         return data
     def column_missing(self,columns,percentage):
         """
@@ -172,7 +172,7 @@ class MissingValueGenerator:
             )
             missing=int((percentage/100)*len(data))
             rows=np.random.choice(data.index,size=missing,replace=False)
-            data.loc(rows,col)=np.nan
+            data.loc[rows,col]=np.nan
         return data
     def row_missing(self,rows):
         """
@@ -208,7 +208,7 @@ class MissingValueGenerator:
                 raise ValueError(
                 f"Row index {row} not found in dataset."
             )
-            data.loc(row)=np.nan
+            data.loc[row]=np.nan
         return data
     def block_missing(self,start,end):
         """
@@ -328,9 +328,9 @@ class MissingValueGenerator:
             raise ValueError(
                 "length cannot exceed dataset size."
             )
-        start=np.random.randint(start=0,end=len(data)-length+1)
-        end=start+length
-        data.loc[start:end]=np.nan
+        start=np.random.randint(0,len(data)-length+1)
+        end=start+length-1
+        data.loc[start:end,column]=np.nan
         return data
     def mcar(self,percentage):
         """
@@ -369,7 +369,7 @@ class MissingValueGenerator:
         )
         data=self.df.copy()
         total_cells=data.shape[0]*data.shape[1]
-        n_missing=(percentage/100)*total_cells
+        n_missing=int((percentage/100)*total_cells)
         position=np.random.choice(total_cells,size=n_missing,replace=False)
         for pos in position:
             row = pos // data.shape[1]
@@ -435,9 +435,9 @@ class MissingValueGenerator:
             f"{target_column} not found."
         )
 
-        if target_column not in data.columns:
+        if condition_column not in data.columns:
             raise ValueError(
-                f"{target_column} not found."
+                f"{condition_column} not found."
             )
 
         if percentage <= 0 or percentage > 100:
@@ -543,7 +543,7 @@ class MissingValueGenerator:
             missing_cell=np.random.choice(selected,size=n_missing,replace=False)
             data.loc[missing_cell,target_column]=np.nan
         return data
-    def correlation_based_missing(self,source_column,target_column,percentage,sort):
+    def correlation_based_missing(self,source_column,target_column,percentage,sort="descending"):
         """
     Generate missing values based on the
     correlation relationship between two
@@ -621,23 +621,16 @@ class MissingValueGenerator:
             raise ValueError(
                 "percentage must be between 0 and 100."
             )
-        if sort.lower() == "descending":
-            ascending = False
-        elif sort.lower() == "ascending":
-            ascending = True
-        else:
+        if sort.lower()!="descending" and sort.lower()!="ascending":
             raise ValueError(
                 "sort must be either "
                 "'ascending' or 'descending'."
             )
         n_missing=int(len(data)*(percentage/100))
         scores=(data[source_column]*data[target_column]).abs()
-        if sort=="descending":
+        if sort.lower()=="descending":
             selected_rows=(scores.nlargest(n_missing).index)
-        else:
+        elif sort.lower()=="ascending":
             selected_rows=(scores.nsmallest(n_missing).index)
-        data.loc(selected_rows,target_column)=np.nan
+        data.loc[selected_rows,source_column]=np.nan
         return data
-    
-            
-
