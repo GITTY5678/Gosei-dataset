@@ -1,14 +1,29 @@
 Metadata-Version: 2.4
 Name: goseidataset
-Version: 0.1.1
-Summary: Dataset generation, missing value simulation, time series generation and dataset merging.
+Version: 1.0.0
+Summary: Synthetic dataset generation, missing value simulation, time series generation, dataset merging, and supervised learning utilities.
 Author: Harihara Suthan
+License: MIT
+Keywords: dataset,synthetic-data,data-generation,missing-values,time-series,machine-learning,data-science,imputation
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Requires-Python: >=3.9
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: pandas
-Requires-Dist: numpy
-Requires-Dist: scikit-learn
+Requires-Dist: pandas>=1.5.0
+Requires-Dist: numpy>=1.23.0
+Requires-Dist: scikit-learn>=1.2.0
 Dynamic: license-file
 
 # Gosei Dataset

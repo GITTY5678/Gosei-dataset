@@ -1,19 +1,56 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "goseidataset"
-version = "0.1.1"
-description = "Dataset generation, missing value simulation, time series generation and dataset merging."
-authors = [
-    {name = "Harihara Suthan"}
-]
+version = "1.0.0"
+description = "Synthetic dataset generation, missing value simulation, time series generation, dataset merging, and supervised learning utilities."
 readme = "README.md"
 requires-python = ">=3.9"
+license = {text = "MIT"}
+
+authors = [
+{name = "Harihara Suthan"}
+]
+
+keywords = [
+"dataset",
+"synthetic-data",
+"data-generation",
+"missing-values",
+"time-series",
+"machine-learning",
+"data-science",
+"imputation"
+]
+
+classifiers = [
+"Development Status :: 5 - Production/Stable",
+"Intended Audience :: Education",
+"Intended Audience :: Science/Research",
+"Intended Audience :: Developers",
+"License :: OSI Approved :: MIT License",
+"Programming Language :: Python :: 3",
+"Programming Language :: Python :: 3.9",
+"Programming Language :: Python :: 3.10",
+"Programming Language :: Python :: 3.11",
+"Programming Language :: Python :: 3.12",
+"Operating System :: OS Independent",
+"Topic :: Scientific/Engineering",
+"Topic :: Software Development :: Libraries :: Python Modules"
+]
 
 dependencies = [
-    "pandas",
-    "numpy",
-    "scikit-learn"
+"pandas>=1.5.0",
+"numpy>=1.23.0",
+"scikit-learn>=1.2.0"
 ]
+
+
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

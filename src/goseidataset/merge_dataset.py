@@ -697,11 +697,6 @@ Iterative Imputation
                 data[numeric_cols]
             )
 
-            data = pd.DataFrame(
-                numeric_cols,
-                columns=data.columns
-            )
-
             report = {
                 "method": "iterative",
                 "missing_before": int(
