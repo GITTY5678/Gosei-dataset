@@ -332,4 +332,312 @@ class MissingValueGenerator:
         end=start+length
         data.loc[start:end]=np.nan
         return data
+    def mcar(self,percentage):
+        """
+    Generate Missing Completely At Random (MCAR)
+    values in the dataset.
+
+    Parameters
+    ----------
+    percentage : float
+        Percentage of dataset cells to replace
+        with missing values (NaN).
+
+    Returns
+    -------
+    pandas.DataFrame
+        Dataset containing MCAR missing values.
+
+    Raises
+    ------
+    ValueError
+        If percentage is not between 0 and 100.
+
+    Notes
+    -----
+    MCAR (Missing Completely At Random) assumes
+    that missingness is entirely random and is
+    not related to any observed or unobserved
+    variable.
+
+    This method is intended for educational
+    purposes and testing imputation methods.
+    """
+        if percentage <= 0 or percentage > 100:
+            raise ValueError(
+            "percentage must be between 0 and 100."
+        )
+        data=self.df.copy()
+        total_cells=data.shape[0]*data.shape[1]
+        n_missing=(percentage/100)*total_cells
+        position=np.random.choice(total_cells,size=n_missing,replace=False)
+        for pos in position:
+            row = pos // data.shape[1]
+            col = pos % data.shape[1]
+            data.iat[row, col] = np.nan
+        return data
+    def mar(self,target_column,condition_column,condition,threshold,percentage):
+        """
+    Generate Missing At Random (MAR)
+    values in a selected column.
+
+    Parameters
+    ----------
+    target_column : str
+        Column where missing values
+        will be introduced.
+
+    target_column : str
+        Observed column controlling
+        the missingness.
+
+    condition : str
+        One of:
+        '>'
+        '<'
+        '>='
+        '<='
+        '=='
+
+    threshold : float or int
+        Threshold used for filtering.
+
+    percentage : float
+        Percentage of eligible rows
+        to be made missing.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Dataset with MAR missing values.
+
+    Raises
+    ------
+    ValueError
+        If columns do not exist.
+
+    ValueError
+        If percentage is invalid.
+
+    Notes
+    -----
+    MAR assumes that missingness
+    depends on another observed
+    variable in the dataset.
+
+    This method is intended for
+    educational purposes and
+    testing imputation methods.
+    """
+        data=self.df.copy()
+        if target_column not in data.columns:
+            raise ValueError(
+            f"{target_column} not found."
+        )
+
+        if target_column not in data.columns:
+            raise ValueError(
+                f"{target_column} not found."
+            )
+
+        if percentage <= 0 or percentage > 100:
+            raise ValueError(
+                "percentage must be between 0 and 100."
+            )
+        
+        if condition==">":
+            selected=data.index[data[condition_column]>threshold]
+        elif condition=="<":
+            selected=data.index[data[condition_column]<threshold]
+        elif condition=="==":
+            selected=data.index[data[condition_column]==threshold]
+        elif condition==">=":
+            selected=data.index[data[condition_column]>=threshold]
+        elif condition=="<=":
+            selected=data.index[data[condition_column]<=threshold]
+        else:
+            raise ValueError("Not eligible condition,only eligible conditions are >,<,>=,<=,==")
+        n_missing=int(len(selected)*(percentage/100))
+        if n_missing>0:
+            missing_cell=np.random.choice(selected,size=n_missing,replace=False)
+            data.loc[missing_cell,target_column]=np.nan
+        return data
+    def mnar(self,target_column,condition,threshold,percentage):
+        """
+    Generate Missing Not At Random (MNAR)
+    values in a selected column.
+
+    Parameters
+    ----------
+    column : str
+        Column where missing values
+        will be introduced.
+
+    condition : str
+        One of:
+        '>'
+        '<'
+        '>='
+        '<='
+        '=='
+
+    threshold : float or int
+        Threshold used for filtering.
+
+    percentage : float
+        Percentage of eligible rows
+        to be made missing.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Dataset with MNAR missing values.
+
+    Raises
+    ------
+    ValueError
+        If the column does not exist.
+
+    ValueError
+        If percentage is invalid.
+
+    ValueError
+        If the condition is invalid.
+
+    Notes
+    -----
+    MNAR (Missing Not At Random)
+    occurs when the probability of
+    missingness depends on the value
+    that is itself becoming missing.
+
+    This method is intended for
+    educational purposes and testing
+    imputation methods.
+    """
+        data=self.df.copy()
+        if target_column not in data.columns:
+            raise ValueError(
+            f"{target_column} not found."
+        )
+
+        if percentage <= 0 or percentage > 100:
+            raise ValueError(
+                "percentage must be between 0 and 100."
+            )
+        
+        if condition==">":
+            selected=data.index[data[target_column]>threshold]
+        elif condition=="<":
+            selected=data.index[data[target_column]<threshold]
+        elif condition=="==":
+            selected=data.index[data[target_column]==threshold]
+        elif condition==">=":
+            selected=data.index[data[target_column]>=threshold]
+        elif condition=="<=":
+            selected=data.index[data[target_column]<=threshold]
+        else:
+            raise ValueError("Not eligible condition,only eligible conditions are >,<,>=,<=,==")
+        n_missing=int(len(selected)*(percentage/100))
+        if n_missing>0:
+            missing_cell=np.random.choice(selected,size=n_missing,replace=False)
+            data.loc[missing_cell,target_column]=np.nan
+        return data
+    def correlation_based_missing(self,source_column,target_column,percentage,sort):
+        """
+    Generate missing values based on the
+    correlation relationship between two
+    variables.
+
+    Parameters
+    ----------
+    source_column : str
+        Column where missing values will
+        be introduced.
+
+    target_column : str
+        Column used to determine the
+        correlation structure.
+
+    percentage : float
+        Percentage of rows to affect.
+
+    sort : str, default="descending"
+        Determines which rows will be selected
+        for missing value injection.
+
+        Supported values:
+
+        - "descending"
+            Removes values from the most
+            influential rows.
+
+        - "ascending"
+            Removes values from the least
+            influential rows.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Dataset containing correlation-based
+        missing values.
+
+    Raises
+    ------
+    ValueError
+        If columns do not exist.
+
+    ValueError
+        If percentage is not between
+        0 and 100.
+
+    ValueError
+        If sort is not "ascending"
+        or "descending".
+
+    Notes
+    -----
+    This method is intended for educational
+    purposes and testing imputation methods.
+
+    Missing values are introduced into the
+    source column using the ordering of the
+    target column, simulating loss of values
+    in highly correlated regions.
+    """
+        data = self.df.copy()
+
+        if source_column not in data.columns:
+            raise ValueError(
+                f"{source_column} not found."
+            )
+
+        if target_column not in data.columns:
+            raise ValueError(
+                f"{target_column} not found."
+            )
+
+        if percentage <= 0 or percentage > 100:
+            raise ValueError(
+                "percentage must be between 0 and 100."
+            )
+        if sort.lower() == "descending":
+            ascending = False
+        elif sort.lower() == "ascending":
+            ascending = True
+        else:
+            raise ValueError(
+                "sort must be either "
+                "'ascending' or 'descending'."
+            )
+        n_missing=int(len(data)*(percentage/100))
+        scores=(data[source_column]*data[target_column]).abs()
+        if sort=="descending":
+            selected_rows=(scores.nlargest(n_missing).index)
+        else:
+            selected_rows=(scores.nsmallest(n_missing).index)
+        data.loc(selected_rows,target_column)=np.nan
+        return data
+    
+            
 
